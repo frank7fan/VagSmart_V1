@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">VagSmart_V1</string>
+    <string name="no_ble">BLE not supported</string>
+
+    <!-- Misc items -->
+    <string name="zero">0</string>
+    <string name="refreshText">Pull Down to Refresh</string>
+    <string name="strength">Strength</string>
+    <string name="data_reading">Sense Reading</string>
+    <string name="left_title">Left</string>
+    <string name="right_title">Right</string>
+    <string name="bar_100">100 -</string>
+    <string name="bar_75">75 -</string>
+    <string name="bar_50">50 -</string>
+    <string name="bar_25">25 -</string>
+    <string name="bar_0">0 -</string>
+    <string name="start_excising">Start Exercising</string>
+    <string name="calibrate_button">Calibrate</string>
+</resources>
