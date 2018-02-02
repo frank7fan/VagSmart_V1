@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v1;
+package com.example.l32e.vagsmart_v3;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;

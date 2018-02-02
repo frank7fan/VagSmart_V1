@@ -1,0 +1,130 @@
+{
+  "project_info": {
+    "project_number": "726123595573",
+    "firebase_url": "https://vagsmartv1.firebaseio.com",
+    "project_id": "vagsmartv1",
+    "storage_bucket": "vagsmartv1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:726123595573:android:6bfbcc2f810a32bf",
+        "android_client_info": {
+          "package_name": "com.example.l32e.vagsmart_v1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "726123595573-9eilgjjatmpkjha02588fa6kj9pe8ltv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.l32e.vagsmart_v1",
+            "certificate_hash": "877cac4350faf9b30f8dd5185a0eb6b7e011e262"
+          }
+        },
+        {
+          "client_id": "726123595573-5ahrm7j1gv7v21f3uea2l7kislle11cd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMDTogCsqFcpPtsx7JIMiO1ZwdCLTIZ5c"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "726123595573-5ahrm7j1gv7v21f3uea2l7kislle11cd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:726123595573:android:2b50fd01f7d6fca3",
+        "android_client_info": {
+          "package_name": "com.example.l32e.vagsmart_test"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "726123595573-5ahrm7j1gv7v21f3uea2l7kislle11cd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMDTogCsqFcpPtsx7JIMiO1ZwdCLTIZ5c"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:726123595573:android:63a9847e72474dac",
+        "android_client_info": {
+          "package_name": "com.example.l32e.vagsmart_v3"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "726123595573-kiaehk5flfb6q4807420j1lapmm158bn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.l32e.vagsmart_v3",
+            "certificate_hash": "877cac4350faf9b30f8dd5185a0eb6b7e011e262"
+          }
+        },
+        {
+          "client_id": "726123595573-5ahrm7j1gv7v21f3uea2l7kislle11cd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMDTogCsqFcpPtsx7JIMiO1ZwdCLTIZ5c"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "726123595573-5ahrm7j1gv7v21f3uea2l7kislle11cd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

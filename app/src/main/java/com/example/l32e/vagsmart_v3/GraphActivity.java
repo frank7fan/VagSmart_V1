@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v1;
+package com.example.l32e.vagsmart_v3;
 
 
 import android.content.BroadcastReceiver;
@@ -8,14 +8,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.TextView;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by frank.fan on 8/9/2017.
@@ -26,12 +33,13 @@ public class GraphActivity extends AppCompatActivity {
     // Objects to access the sense values; left 3 and right 3
     private TextView mSenseAverageText;
     private Button barStartButton;
-    private static ProgressBar progressBarCustom1;
-    private static ProgressBar progressBarCustom2;
-    private static ProgressBar progressBarCustom3;
-    private static ProgressBar progressBarCustom4;
-    private static ProgressBar progressBarCustom5;
-    private static ProgressBar progressBarCustom6;
+    private CheckBox dataLogBox;
+    private ProgressBar progressBarCustom1;
+    private ProgressBar progressBarCustom2;
+    private ProgressBar progressBarCustom3;
+    private ProgressBar progressBarCustom4;
+    private ProgressBar progressBarCustom5;
+    private ProgressBar progressBarCustom6;
 
     // Keep track of whether reading Notifications are on or off
     private boolean NotifyState = false;
@@ -39,8 +47,15 @@ public class GraphActivity extends AppCompatActivity {
     // This tag is used for debug messages
     private static final String TAG = GraphActivity.class.getSimpleName();
 
+    //BLE parameters pass over from SCAN Activity
     private static String mDeviceAddress;
+    private static String mDeviceName;
     private static PSoCBleRobotService mPSoCBleRobotService;
+
+
+    //Firebase Database Object
+    private DatabaseReference mDatabase;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,14 +71,14 @@ public class GraphActivity extends AppCompatActivity {
         progressBarCustom5 = (ProgressBar) findViewById(R.id.progressBar5);
         progressBarCustom6 = (ProgressBar) findViewById(R.id.progressBar6);
 
-        //progressBarCustom1.setProgress(10);
-
         // Assign the various layout objects to the appropriate variables
         mSenseAverageText = (TextView) findViewById(R.id.senseAverage);
         barStartButton = (Button) findViewById(R.id.bar_start_button);
+        dataLogBox = (CheckBox) findViewById(R.id.radioButton);
 
         final Intent intent = getIntent();
         mDeviceAddress = intent.getStringExtra(ScanActivity.EXTRAS_BLE_ADDRESS);
+        mDeviceName = intent.getStringExtra(ScanActivity.EXTRA_BLE_DEVICE_NAME);
 
         // Bind to the BLE service
         Log.i(TAG, "Binding Service");
@@ -146,6 +161,7 @@ public class GraphActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
+            //final String VagDeviceID = "101";
             switch (action) {
                 case PSoCBleRobotService.ACTION_CONNECTED:
                     // No need to do anything here. Service discovery is started by the service.
@@ -170,6 +186,23 @@ public class GraphActivity extends AppCompatActivity {
                     progressBarCustom4.setProgress((int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT))/10);
                     progressBarCustom5.setProgress((int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT2))/10);
                     progressBarCustom6.setProgress((int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT3))/10);
+
+                    //check if there is internet connection
+                    ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                    boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+
+                    // write sensor readings to Firebase Realtime database
+                    if (isConnected & dataLogBox.isChecked()) {
+                        mDatabase = FirebaseDatabase.getInstance().getReference();
+                        mDatabase.child(mDeviceName).child("sensor0").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT));
+                        mDatabase.child(mDeviceName).child("sensor1").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT2));
+                        mDatabase.child(mDeviceName).child("sensor2").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT3));
+                        mDatabase.child(mDeviceName).child("sensor3").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT));
+                        mDatabase.child(mDeviceName).child("sensor4").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT2));
+                        mDatabase.child(mDeviceName).child("sensor5").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT3));
+
+                }
                     break;
             }
         }
@@ -188,4 +221,5 @@ public class GraphActivity extends AppCompatActivity {
         intentFilter.addAction(PSoCBleRobotService.ACTION_DATA_AVAILABLE);
         return intentFilter;
     }
+
 }

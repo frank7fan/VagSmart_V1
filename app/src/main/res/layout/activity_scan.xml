@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.l32e.vagsmart_v1.ScanActivity">
+    tools:context="com.example.l32e.vagsmart_v3.ScanActivity">
 
     <ImageView
         android:id="@+id/imageView"
@@ -96,8 +96,8 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginTop="32dp"
-        android:text="Connect"
-        android:textSize="50dp"
+        android:text="@string/connect_v3"
+        android:textSize="50sp"
         android:textStyle="bold"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -112,8 +112,8 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:text="Make sure your device is active"
-        android:textSize="24dp"
+        android:text="@string/make_sure_your_device_is_active"
+        android:textSize="24sp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginTop="32dp"
@@ -125,8 +125,8 @@
         android:layout_width="0dp"
         android:layout_height="264dp"
         android:layout_marginBottom="8dp"
-        android:layout_marginLeft="0dp"
-        android:layout_marginRight="32dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="32dp"
         android:layout_marginTop="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="@+id/refresh"
