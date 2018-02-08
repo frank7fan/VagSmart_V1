@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v3;
+package com.example.l32e.vagsmart_v4;
 
 
 import android.content.BroadcastReceiver;
@@ -13,22 +13,26 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
-import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
+
+import java.util.HashMap;
 
 /**
  * Created by frank.fan on 8/9/2017.
  */
 
-public class GraphActivity extends AppCompatActivity {
+public class GraphActivity extends AppCompatActivity implements InputDialog.InputDialogListenser{
     //UI Objects declare
     // Objects to access the sense values; left 3 and right 3
     private TextView mSenseAverageText;
@@ -51,6 +55,10 @@ public class GraphActivity extends AppCompatActivity {
     private static String mDeviceAddress;
     private static String mDeviceName;
     private static PSoCBleRobotService mPSoCBleRobotService;
+    private String user;
+    private String sessionType;
+    private Boolean isGaming = true;
+    private Boolean isUserInfoValid = false;
 
 
     //Firebase Database Object
@@ -108,23 +116,40 @@ public class GraphActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             mPSoCBleRobotService = null;
+            //go back to scan activity
+            onBackPressed();
         }
     };
 
     /* This will be the place for the code when button get pushed */
     public void goStart(View view) {
         if(!NotifyState) {
+            //id data logging enabled, pop up window for input information
+            if(dataLogBox.isChecked()){
+                openDialog();
+            }
+            //disable Datalog checkbox while running data sensing;
+            //once start data sensing, do not allow to enable/disable data logging
+            dataLogBox.setEnabled(false);
+
             NotifyState = true;
             //enable notification and start receiving sense reading
             mPSoCBleRobotService.writeNotification(true);
             barStartButton.setText("Pause");
 
-        } else { //NotifyState = true
+        } else {
+            isUserInfoValid = false;
             NotifyState = false;
             //set BLE cccd to false
             mPSoCBleRobotService.writeNotification(false);
             barStartButton.setText("Start");
+            dataLogBox.setEnabled(true);
         }
+    }
+
+    public void openDialog(){
+        InputDialog inputDialog = new InputDialog();
+        inputDialog.show(getSupportFragmentManager(), "input dialog");
     }
 
     @Override
@@ -161,7 +186,7 @@ public class GraphActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            //final String VagDeviceID = "101";
+
             switch (action) {
                 case PSoCBleRobotService.ACTION_CONNECTED:
                     // No need to do anything here. Service discovery is started by the service.
@@ -174,7 +199,8 @@ public class GraphActivity extends AppCompatActivity {
                     break;
                 case PSoCBleRobotService.ACTION_DISCONNECTED:
                     mPSoCBleRobotService.close();
-                    //finish();
+                    //go back to scan activity
+                    finish();
                     break;
                 case PSoCBleRobotService.ACTION_DATA_AVAILABLE:
                     // This is called after a Notify completes
@@ -193,15 +219,34 @@ public class GraphActivity extends AppCompatActivity {
                     boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
                     // write sensor readings to Firebase Realtime database
-                    if (isConnected & dataLogBox.isChecked()) {
-                        mDatabase = FirebaseDatabase.getInstance().getReference();
-                        mDatabase.child(mDeviceName).child("sensor0").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT));
-                        mDatabase.child(mDeviceName).child("sensor1").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT2));
-                        mDatabase.child(mDeviceName).child("sensor2").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT3));
-                        mDatabase.child(mDeviceName).child("sensor3").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT));
-                        mDatabase.child(mDeviceName).child("sensor4").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT2));
-                        mDatabase.child(mDeviceName).child("sensor5").setValue(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT3));
+                    if (isConnected & dataLogBox.isChecked() & isUserInfoValid) {
 
+                        if(isGaming) {
+                            mDatabase = FirebaseDatabase.getInstance().getReference(mDeviceName);
+                            mDatabase.child(mDeviceName).child("sensor0").setValue(1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT));
+                            mDatabase.child(mDeviceName).child("sensor1").setValue(1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT2));
+                            mDatabase.child(mDeviceName).child("sensor2").setValue(1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT3));
+                            mDatabase.child(mDeviceName).child("sensor3").setValue(1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT));
+                            mDatabase.child(mDeviceName).child("sensor4").setValue(1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT2));
+                            mDatabase.child(mDeviceName).child("sensor5").setValue(1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT3));
+                            mDatabase.child(mDeviceName).child("time").setValue(ServerValue.TIMESTAMP);
+                            mDatabase.child(mDeviceName).child("user").setValue(user);
+                            mDatabase.child(mDeviceName).child("session").setValue(sessionType);
+
+                        }else {
+                            mDatabase = FirebaseDatabase.getInstance().getReference(mDeviceName+"RTData");
+                            HashMap<String, Object> message = new HashMap<>();
+                            message.put("user", user);
+                            message.put("Time", ServerValue.TIMESTAMP);
+                            message.put("session", sessionType);
+                            message.put("S0", (1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT)));
+                            message.put("S1", (1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT2)));
+                            message.put("S2", (1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT3)));
+                            message.put("S3", (1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT)));
+                            message.put("S4", (1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT2)));
+                            message.put("S5", (1023 - PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT3)));
+                            mDatabase.push().setValue(message);
+                        }
                 }
                     break;
             }
@@ -222,4 +267,20 @@ public class GraphActivity extends AppCompatActivity {
         return intentFilter;
     }
 
+    @Override
+    public void applyTexts(String username, String session, int selectedId) {
+        user = username;
+        sessionType = session;
+        Toast.makeText(getApplicationContext(), "selectedId="+selectedId, Toast.LENGTH_LONG).show();
+        if(selectedId==0) isGaming = true;
+        else isGaming = false;
+        if (TextUtils.isEmpty(username)|TextUtils.isEmpty(session)) {
+            Toast.makeText(getApplicationContext(), "Input User Info Blank, no data sent", Toast.LENGTH_LONG).show();
+            isUserInfoValid = false;
+        }else{
+            isUserInfoValid = true;
+        }
+
+    }
 }
+

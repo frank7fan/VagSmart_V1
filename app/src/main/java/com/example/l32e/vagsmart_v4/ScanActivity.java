@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v3;
+package com.example.l32e.vagsmart_v4;
 
 import android.Manifest;
 import android.app.Activity;
@@ -181,10 +181,12 @@ public class ScanActivity extends AppCompatActivity {
                 final Intent intent = new Intent(ScanActivity.this, GraphActivity.class);
                 // Send the address of the device that was selected so that the control activity
                 // knows which device to connect with
-                intent.putExtra(EXTRAS_BLE_ADDRESS, mBluetoothDevice.get(position).getAddress());
-                intent.putExtra(EXTRA_BLE_DEVICE_NAME, mBleName.get(position));
-                scanLeDevice(false); // Stop scanning
-                startActivity(intent);
+                if (EXTRAS_BLE_ADDRESS != null) {
+                    intent.putExtra(EXTRAS_BLE_ADDRESS, mBluetoothDevice.get(position).getAddress());
+                    intent.putExtra(EXTRA_BLE_DEVICE_NAME, mBleName.get(position));
+                    scanLeDevice(false); // Stop scanning
+                    startActivity(intent);
+                };
             }
         });
 

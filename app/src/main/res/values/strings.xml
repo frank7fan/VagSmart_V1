@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VagSmart_V3</string>
+    <string name="app_name">VagSmart_V4</string>
     <string name="no_ble">BLE not supported</string>
 
     <!-- Misc items -->
@@ -18,6 +18,6 @@
     <string name="calibrate_button">Calibrate</string>
     <string name="log_data">Log Data</string>
     <string name="start">START</string>
-    <string name="connect_v3">Connect V3</string>
+    <string name="connect_v3">Connect V4</string>
     <string name="make_sure_your_device_is_active">Make sure your device is active</string>
 </resources>

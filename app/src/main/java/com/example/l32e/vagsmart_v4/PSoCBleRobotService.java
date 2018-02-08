@@ -28,7 +28,7 @@ For more information on Cypress BLE products visit:
 http://www.cypress.com/products/bluetooth-low-energy-ble
  */
 
-package com.example.l32e.vagsmart_v3;
+package com.example.l32e.vagsmart_v4;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
