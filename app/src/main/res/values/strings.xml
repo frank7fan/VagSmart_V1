@@ -18,6 +18,7 @@
     <string name="calibrate_button">Calibrate</string>
     <string name="log_data">Log Data</string>
     <string name="start">START</string>
-    <string name="connect_v3">Connect V4</string>
+    <string name="connect_v3">Connect</string>
     <string name="make_sure_your_device_is_active">Make sure your device is active</string>
+    <string name="version">V4.1</string>
 </resources>

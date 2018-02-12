@@ -1,202 +1,399 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="10"
+        android:id="@+id/graph_title1"
+>
+        <TextView
+            android:id="@+id/strength"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:text="@string/strength"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="36sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/bar_start_button"
+            style="@style/Widget.AppCompat.Button"
+            android:layout_width="150dp"
+            android:layout_margin="15dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:gravity="center"
+            android:background="@color/colorPrimaryLight"
+            android:onClick="goStart"
+            android:text="@string/start"
+            android:textSize="24sp" />
+        <CheckBox
+            android:id="@+id/radioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:text="@string/log_data"
+            android:textSize="24sp"/>
 
-    <TextView
-        android:id="@+id/promity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_margin="16dp"
-        android:text="@string/strength"
-        android:textColor="@color/colorPrimaryDark"
-        android:textSize="36sp"
-        android:textStyle="bold" />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/senseAverage"
-        android:layout_below="@+id/promity"
-        android:text="0"
-        android:textSize="24sp"
-        android:visibility="invisible"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/senseAverage"
+            android:layout_centerInParent="true"
+            android:text="0"
+            android:textSize="24sp" />
 
-    <Button
-        android:id="@+id/bar_start_button"
-        style="@style/Widget.AppCompat.Button"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="16dp"
-        android:background="@color/colorPrimaryLight"
-        android:onClick="goStart"
-        android:text="@string/start"
-        android:textSize="24sp" />
+        <TextView
+            android:id="@+id/version_graph"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/version"
+            android:textSize="22sp" />
+    </RelativeLayout>
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="90">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/bar_area"
+            android:layout_alignParentTop="true"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_toStartOf="@+id/proximity_meter"
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="top"
+                android:text="@string/bar_100"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:layout_marginBottom="25dp"
+                android:text="@string/bar_75"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/bar_50"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:layout_marginTop="25dp"
+                android:text="@string/bar_25"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="bottom"
+                android:text="@string/bar_0"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/proximity_meter"
+            android:layout_width="3dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_marginBottom="30dp"
+            android:layout_marginTop="30dp"
+            android:layout_toStartOf="@+id/proximity_bar"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimaryDark" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/proximity_bar"
+            android:layout_width="500dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_alignBottom="@+id/proximity_meter"
+            android:layout_alignParentTop="true"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:id="@+id/progressBar1a"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:progressDrawable="@drawable/progressbarthemeraw"
+                android:progress="70"
+                android:paddingLeft="5dp"
+                android:paddingRight="0dp"/>
+            <ProgressBar
+                android:id="@+id/progressBar1"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="10"
+                android:progressDrawable="@drawable/progressbartheme"
+                android:progress="70"
+                android:paddingLeft="0dp"
+                android:paddingRight="5dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar2a"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:progressDrawable="@drawable/progressbarthemeraw"
+                android:progress="60"
+                android:paddingLeft="5dp"
+                android:paddingRight="0dp"/>
+            <ProgressBar
+                android:id="@+id/progressBar2"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="10"
+                android:progressDrawable="@drawable/progressbartheme"
+                android:progress="60"
+                android:paddingLeft="0dp"
+                android:paddingRight="5dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar3a"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:progressDrawable="@drawable/progressbarthemeraw"
+                android:progress="50"
+                android:paddingLeft="5dp"
+                android:paddingRight="0dp"/>
+            <ProgressBar
+                android:id="@+id/progressBar3"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="10"
+                android:progressDrawable="@drawable/progressbartheme"
+                android:progress="50"
+                android:paddingLeft="0dp"
+                android:paddingRight="5dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar4a"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:progressDrawable="@drawable/progressbarthemeraw"
+                android:progress="50"
+                android:paddingLeft="5dp"
+                android:paddingRight="0dp"/>
+            <ProgressBar
+                android:id="@+id/progressBar4"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="10"
+                android:progressDrawable="@drawable/progressbartheme"
+                android:progress="50"
+                android:paddingLeft="0dp"
+                android:paddingRight="5dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar5a"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:progressDrawable="@drawable/progressbarthemeraw"
+                android:progress="60"
+                android:paddingLeft="5dp"
+                android:paddingRight="0dp"/>
+            <ProgressBar
+                android:id="@+id/progressBar5"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="10"
+                android:progressDrawable="@drawable/progressbartheme"
+                android:progress="60"
+                android:paddingLeft="0dp"
+                android:paddingRight="5dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar6a"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:progressDrawable="@drawable/progressbarthemeraw"
+                android:progress="70"
+                android:paddingLeft="5dp"
+                android:paddingRight="0dp"/>
+            <ProgressBar
+                android:id="@+id/progressBar6"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="10"
+                android:progressDrawable="@drawable/progressbartheme"
+                android:progress="70"
+                android:paddingLeft="0dp"
+                android:paddingRight="5dp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="500dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:layout_below="@+id/proximity_bar"
+            android:layout_alignLeft="@+id/proximity_bar"
+            android:layout_alignRight="@+id/proximity_bar"
+            android:layout_marginEnd="32dp"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="1"/>
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="2"/>
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="3"/>
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="4"/>
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="5"/>
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="6"/>
+
+        </LinearLayout>
+    </RelativeLayout>
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_below="@id/promity"
-        android:layout_marginBottom="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_toStartOf="@+id/proximity_meter"
-        android:gravity="end"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="top"
-            android:text="@string/bar_100"
-            android:textColor="@color/colorPrimaryDark"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:layout_marginBottom="25dp"
-            android:text="@string/bar_75"
-            android:textColor="@color/colorPrimaryDark"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/bar_50"
-            android:textColor="@color/colorPrimaryDark"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:layout_marginTop="25dp"
-            android:text="@string/bar_25"
-            android:textColor="@color/colorPrimaryDark"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="bottom"
-            android:text="@string/bar_0"
-            android:textColor="@color/colorPrimaryDark"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/proximity_meter"
-        android:layout_width="3dp"
-        android:layout_height="match_parent"
-        android:layout_below="@id/promity"
-        android:layout_marginBottom="30dp"
-        android:layout_marginTop="30dp"
-        android:layout_toStartOf="@+id/proximity_bar"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="10"
         android:orientation="horizontal">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/colorPrimaryDark" />
-
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_cal_min"
+            android:layout_margin="10dp"
+            android:text="Set Min."
+            android:inputType="text"
+            android:textSize="30dp"
+            android:onClick="calSetMin"
+            android:background="@color/colorPrimaryLight"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_cal_clr"
+            android:layout_margin="10dp"
+            android:text="Clear"
+            android:inputType="text"
+            android:textSize="30dp"
+            android:onClick="calClear"
+            android:background="@color/colorPrimaryLight"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_cal_max"
+            android:layout_margin="10dp"
+            android:text="Set Max."
+            android:textSize="30dp"
+            android:onClick="calSetMax"
+            android:inputType="text"
+            android:background="@color/colorPrimaryLight"/>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/proximity_bar"
-        android:layout_width="500dp"
-        android:layout_height="match_parent"
-        android:layout_below="@id/promity"
-        android:layout_alignParentEnd="true"
-        android:layout_alignBottom="@+id/proximity_meter"
-        android:layout_alignTop="@+id/proximity_meter"
-        android:layout_marginEnd="32dp"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <ProgressBar
-            android:id="@+id/progressBar1"
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:progressDrawable="@drawable/progressbartheme"
-            android:progress="70"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"/>
-        <ProgressBar
-            android:id="@+id/progressBar2"
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:progressDrawable="@drawable/progressbartheme"
-            android:progress="60"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"/>
-        <ProgressBar
-            android:id="@+id/progressBar3"
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:progressDrawable="@drawable/progressbartheme"
-            android:progress="50"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"/>
-        <ProgressBar
-            android:id="@+id/progressBar4"
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:progressDrawable="@drawable/progressbartheme"
-            android:progress="50"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"/>
-        <ProgressBar
-            android:id="@+id/progressBar5"
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:progressDrawable="@drawable/progressbartheme"
-            android:progress="60"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"/>
-        <ProgressBar
-            android:id="@+id/progressBar6"
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:progressDrawable="@drawable/progressbartheme"
-            android:progress="70"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"/>
-
-    </LinearLayout>
-
-    <CheckBox
-        android:id="@+id/radioButton"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="true"
-        android:text="@string/log_data"
-        android:textSize="24sp"
-        android:layout_alignBottom="@+id/bar_start_button"
-        android:layout_alignTop="@+id/promity"
-        android:layout_toStartOf="@+id/promity" />
-</RelativeLayout>
+</LinearLayout>

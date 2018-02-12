@@ -270,7 +270,8 @@ public class PSoCBleRobotService extends Service {
      *
      * @return Return true if the initialization is successful.
      */
-    public boolean initialize() {
+    public boolean initialize() throws InterruptedException {
+
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
         if (mBluetoothManager == null) {
@@ -282,16 +283,17 @@ public class PSoCBleRobotService extends Service {
         }
 
         mBluetoothAdapter = mBluetoothManager.getAdapter();
+
         if (mBluetoothAdapter == null) {
             Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
             return false;
         }
 
         // Initialize car state variables
-        motorLeftState = false;
-        motorRightState = false;
-        motorLeftSpeed = 0;
-        motorRightSpeed = 0;
+        //motorLeftState = false;
+        //motorRightState = false;
+        //motorLeftSpeed = 0;
+        //motorRightSpeed = 0;
         Log.i(TAG, "enable writeNotification-FF");
         return true;
     }
