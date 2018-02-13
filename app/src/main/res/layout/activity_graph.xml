@@ -9,10 +9,12 @@
         android:layout_weight="10"
         android:id="@+id/graph_title1"
 >
+
         <TextView
             android:id="@+id/strength"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
             android:gravity="center"
             android:text="@string/strength"
@@ -26,17 +28,20 @@
             android:layout_margin="15dp"
             android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
+            android:layout_toLeftOf="@+id/strength"
             android:gravity="center"
-            android:background="@color/colorPrimaryLight"
+            android:background="@drawable/button_start"
             android:onClick="goStart"
             android:text="@string/start"
-            android:textSize="24sp" />
+            android:textSize="24sp"
+            android:textColor="@color/colorPrimaryDark"/>
         <CheckBox
             android:id="@+id/radioButton"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_alignParentStart="true"
             android:text="@string/log_data"
+            android:textColor="@color/colorPrimaryDark"
             android:textSize="24sp"/>
 
     </RelativeLayout>
@@ -51,7 +56,6 @@
             android:layout_height="match_parent"
             android:id="@+id/senseAverage"
             android:layout_centerInParent="true"
-            android:text="0"
             android:textSize="24sp" />
 
         <TextView
@@ -366,34 +370,40 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:id="@+id/btn_cal_min"
+            android:background="@drawable/button_calbrations"
             android:layout_margin="10dp"
             android:text="Set Min."
             android:inputType="text"
             android:textSize="30dp"
+            android:textColor="@drawable/calbutton_textselector"
             android:onClick="calSetMin"
-            android:background="@color/colorPrimaryLight"/>
+            />
         <Button
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:id="@+id/btn_cal_clr"
+            android:background="@drawable/button_calbrations"
             android:layout_margin="10dp"
             android:text="Clear"
             android:inputType="text"
             android:textSize="30dp"
+            android:textColor="@drawable/calbutton_textselector"
             android:onClick="calClear"
-            android:background="@color/colorPrimaryLight"/>
+            />
         <Button
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:id="@+id/btn_cal_max"
+            android:background="@drawable/button_calbrations"
             android:layout_margin="10dp"
             android:text="Set Max."
             android:textSize="30dp"
+            android:textColor="@drawable/calbutton_textselector"
             android:onClick="calSetMax"
             android:inputType="text"
-            android:background="@color/colorPrimaryLight"/>
+            />
     </LinearLayout>
 
 </LinearLayout>

@@ -281,8 +281,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         user = username;
         sessionType = session;
         Toast.makeText(getApplicationContext(), "selectedId="+selectedId, Toast.LENGTH_LONG).show();
-        if(selectedId==0) isGaming = true;
-        else isGaming = false;
+        isGaming = selectedId == 0;
         if (TextUtils.isEmpty(username)|TextUtils.isEmpty(session)) {
             Toast.makeText(getApplicationContext(), "Input User Info Blank, no data sent", Toast.LENGTH_LONG).show();
             isUserInfoValid = false;
@@ -331,8 +330,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
             calMaxButton.setEnabled(false);
             calMinButton.setEnabled(false);
             calClearButton.setEnabled(false);
-            calMaxButton.setBackgroundResource(R.color.colorPrimaryLight);
-            calMinButton.setBackgroundResource(R.color.colorPrimaryLight);
+            calMaxButton.setBackgroundResource(R.drawable.button_calbrations);
+            calMinButton.setBackgroundResource(R.drawable.button_calbrations);
         }
     }
 
@@ -357,8 +356,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
             calMax[i] = 1023;
             calMin[i] =0;}
         Toast.makeText(getApplicationContext(), "clear min Max", Toast.LENGTH_SHORT).show();
-        calMaxButton.setBackgroundResource(R.color.colorPrimaryLight);
-        calMinButton.setBackgroundResource(R.color.colorPrimaryLight);
+        calMaxButton.setBackgroundResource(R.drawable.button_calbrations);
+        calMinButton.setBackgroundResource(R.drawable.button_calbrations);
         CalMaxState = false;
         CalMinState = false;
     }
@@ -395,9 +394,9 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         //int extendMax = inputMax;
         //mapping from (extendMin,extendMax) to (0, 100)
         if (inputValue < extendMin){
-            return (int)0;}
+            return 0;}
         else if (inputValue > extendMax){
-            return (int)100;}
+            return 100;}
         else return (inputValue-extendMin)*100/(extendMax-extendMin);
         //else return inputValue/10;
     }
