@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 /**
- * Created by frank.fan on 8/9/2017.
+ * Created by frank.fan on 3/1/2018.
  */
 
 public class GraphActivity extends AppCompatActivity implements InputDialog.InputDialogListenser{
@@ -160,7 +160,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mRobotUpdateReceiver, makeRobotUpdateIntentFilter());
+        registerReceiver(mSensorUpdateReceiver, makeSensorUpdateIntentFilter());
         if (mBleService != null) {
             final boolean result = mBleService.connect(mDeviceAddress);
             Log.i(TAG, "Connect request result=" + result);
@@ -176,7 +176,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(mRobotUpdateReceiver);
+        unregisterReceiver(mSensorUpdateReceiver);
     }
 
     @Override
@@ -193,7 +193,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
      * ACTION_DATA_AVAILABLE: received data from the Sensors.  This can be a result of a read
      * or notify operation.
      */
-    private final BroadcastReceiver mRobotUpdateReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mSensorUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
@@ -284,7 +284,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
      *
      * @return intentFilter
      */
-    private static IntentFilter makeRobotUpdateIntentFilter() {
+    private static IntentFilter makeSensorUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BleService.ACTION_CONNECTED);
         intentFilter.addAction(BleService.ACTION_DISCONNECTED);
