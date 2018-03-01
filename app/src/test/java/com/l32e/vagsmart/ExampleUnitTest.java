@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v4;
+package com.l32e.vagsmart;
 
 import org.junit.Test;
 

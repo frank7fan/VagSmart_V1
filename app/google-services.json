@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:92380679586:android:a795aba2d03325ba",
         "android_client_info": {
-          "package_name": "com.example.l32e.vagsmart_v4"
+          "package_name": "com.l32e.vagsmart"
         }
       },
       "oauth_client": [
@@ -18,7 +18,7 @@
           "client_id": "92380679586-as3325fae0c57u16apgenal7di9k8o20.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.l32e.vagsmart_v4",
+            "package_name": "com.l32e.vagsmart",
             "certificate_hash": "877cac4350faf9b30f8dd5185a0eb6b7e011e262"
           }
         },

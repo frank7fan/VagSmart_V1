@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v4;
+package com.l32e.vagsmart;
 
 
 import android.content.BroadcastReceiver;
@@ -55,11 +55,12 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     //BLE parameters pass over from SCAN Activity
     private static String mDeviceAddress;
     private static String mDeviceName;
-    private static PSoCBleRobotService mPSoCBleRobotService;
+    private static BleService mBleService;
     private String user;
     private String sessionType;
     private Boolean isGaming = true;
     private Boolean isUserInfoValid = false;
+    private Boolean isBleConnected = false;
 
     //Firebase Database Object
     private DatabaseReference mDatabase;
@@ -69,7 +70,6 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private int[] calMax = new int[] {1023,1023,1023,1023,1023,1023};
     private int[] sensorReading = new int[6];
     private int[] mappedData = new int[6];
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +91,6 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         progressBarRaw[4] = (ProgressBar) findViewById(R.id.progressBar5a);
         progressBarRaw[5] = (ProgressBar) findViewById(R.id.progressBar6a);
 
-
         // Assign the various layout objects to the appropriate variables
         mSenseAverageText = (TextView) findViewById(R.id.senseAverage);
         barStartButton = (Button) findViewById(R.id.bar_start_button);
@@ -109,10 +108,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
 
         // Bind to the BLE service
         Log.i(TAG, "Binding Service");
-        Intent RobotServiceIntent = new Intent(this, PSoCBleRobotService.class);
-        bindService(RobotServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-
-
+        Intent SensorServiceIntent = new Intent(this, BleService.class);
+        bindService(SensorServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
     /**
      * This manages the lifecycle of the BLE service.
@@ -123,23 +120,33 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
 
-            mPSoCBleRobotService = ((PSoCBleRobotService.LocalBinder) service).getService();
+            mBleService = ((BleService.LocalBinder) service).getService();
             try {
-                if (!mPSoCBleRobotService.initialize()) {
+                if (!mBleService.initialize()) {
                     Log.e(TAG, "Unable to initialize Bluetooth");
                     finish();
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            // Automatically connects to the peripherial database upon successful start-up initialization.
-            mPSoCBleRobotService.connect(mDeviceAddress);
-            Log.i(TAG, "onServiceConnected with mDeviceAddress: " + mDeviceAddress);
+            // Automatically connects to the peripheral database upon successful start-up initialization.
+            try {
+                if(mBleService.connect(mDeviceAddress)) {
+                    Log.i(TAG, "onServiceConnected with mDeviceAddress: " + mDeviceAddress);
+                } else{
+                    Log.i(TAG, "device is no longer there");
+                    Toast.makeText(getApplicationContext(), "Device is gone", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            mPSoCBleRobotService = null;
+            mBleService = null;
             //go back to scan activity
             onBackPressed();
         }
@@ -154,9 +161,15 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     protected void onResume() {
         super.onResume();
         registerReceiver(mRobotUpdateReceiver, makeRobotUpdateIntentFilter());
-        if (mPSoCBleRobotService != null) {
-            final boolean result = mPSoCBleRobotService.connect(mDeviceAddress);
+        if (mBleService != null) {
+            final boolean result = mBleService.connect(mDeviceAddress);
             Log.i(TAG, "Connect request result=" + result);
+            if (!result){
+                Toast.makeText(this, "Cannot find device", Toast.LENGTH_SHORT).show();
+                onBackPressed();
+            }
+        } else{
+            Log.i(TAG, "mBleService is NULL");
         }
     }
 
@@ -170,7 +183,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     protected void onDestroy() {
         super.onDestroy();
         unbindService(mServiceConnection);
-        mPSoCBleRobotService = null;
+        mBleService = null;
     }
 
     /**
@@ -186,27 +199,30 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
             final String action = intent.getAction();
 
             switch (action) {
-                case PSoCBleRobotService.ACTION_CONNECTED:
+                case BleService.ACTION_CONNECTED:
                     // No need to do anything here. Service discovery is started by the service.
                     Log.i(TAG, "BroadcastReceiver ACTION_CONNECTED");
-                    if (mPSoCBleRobotService != null) {
-                        final boolean result = mPSoCBleRobotService.connect(mDeviceAddress);
+                    if (mBleService != null) {
+                        final boolean result = mBleService.connect(mDeviceAddress);
                         Log.i(TAG, "Connect request result=" + result);
+                        isBleConnected = true;
                     }
-                    //mPSoCBleRobotService.writeNotification(true);
+                    //mBleService.writeNotification(true);
                     break;
-                case PSoCBleRobotService.ACTION_DISCONNECTED:
-                    mPSoCBleRobotService.close();
+                case BleService.ACTION_DISCONNECTED:
+                    mBleService.close();
+                    isBleConnected = false;
+                    Toast.makeText(getApplicationContext(), "Device gets disconnected", Toast.LENGTH_LONG).show();
                     //go back to scan activity
                     finish();
                     break;
-                case PSoCBleRobotService.ACTION_DATA_AVAILABLE:
-                    sensorReading[0] = (int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT));
-                    sensorReading[1] = (int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT2));
-                    sensorReading[2] = (int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.LEFT3));
-                    sensorReading[3] = (int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT));
-                    sensorReading[4] = (int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT2));
-                    sensorReading[5] = (int)(1023-PSoCBleRobotService.getTach(PSoCBleRobotService.Motor.RIGHT3));
+                case BleService.ACTION_DATA_AVAILABLE:
+                    sensorReading[0] = (int)(1023- BleService.getPressure(BleService.Sensor.ONE));
+                    sensorReading[1] = (int)(1023- BleService.getPressure(BleService.Sensor.THREE));
+                    sensorReading[2] = (int)(1023- BleService.getPressure(BleService.Sensor.FIVE));
+                    sensorReading[3] = (int)(1023- BleService.getPressure(BleService.Sensor.TWO));
+                    sensorReading[4] = (int)(1023- BleService.getPressure(BleService.Sensor.FOUR));
+                    sensorReading[5] = (int)(1023- BleService.getPressure(BleService.Sensor.SIX));
 
                     //Display mapping data to Bar graph
                     for (int i = 0; i < sensorReading.length; i++){
@@ -270,9 +286,9 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
      */
     private static IntentFilter makeRobotUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(PSoCBleRobotService.ACTION_CONNECTED);
-        intentFilter.addAction(PSoCBleRobotService.ACTION_DISCONNECTED);
-        intentFilter.addAction(PSoCBleRobotService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BleService.ACTION_CONNECTED);
+        intentFilter.addAction(BleService.ACTION_DISCONNECTED);
+        intentFilter.addAction(BleService.ACTION_DATA_AVAILABLE);
         return intentFilter;
     }
 
@@ -292,46 +308,52 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     }
     /* This will be the place for the code when button get pushed */
     public void goStart(View view) {
-        if(!NotifyState) {
-            //id data logging enabled, pop up window for input information
-            if(dataLogBox.isChecked()){
-                openDialog();
+        if(isBleConnected){
+            if(!NotifyState) {
+                //id data logging enabled, pop up window for input information
+                if(dataLogBox.isChecked()){
+                    openDialog();
+                }
+                //disable Datalog checkbox while running data sensing;
+                //once start data sensing, do not allow to enable/disable data logging
+                dataLogBox.setEnabled(false);
+
+                NotifyState = true;
+                //enable notification and start receiving sense reading
+                mBleService.writeNotification(true);
+
+                barStartButton.setText("Pause");
+                //enableCalibration buttons
+                calMaxButton.setEnabled(true);
+                calMinButton.setEnabled(true);
+                calClearButton.setEnabled(true);
+
+                //check if Calmin has non-zero value, set boarder for button
+                if (CalMinState) calMinButton.setBackgroundResource(R.drawable.button_border);
+                //check if Calmin has non-1023 value, set boarder for button
+                if (CalMaxState) calMaxButton.setBackgroundResource(R.drawable.button_border);
+                //clear Cal data
+                //for (int i=0; i<6; i++){
+                //    calMax[i] = 1023;
+                //    calMin[i] =0;}
+
+            } else {
+                isUserInfoValid = false;
+                NotifyState = false;
+                //set BLE cccd to false
+                mBleService.writeNotification(false);
+                barStartButton.setText("Start");
+                dataLogBox.setEnabled(true);
+                //disbale Calibration buttons
+                calMaxButton.setEnabled(false);
+                calMinButton.setEnabled(false);
+                calClearButton.setEnabled(false);
+                calMaxButton.setBackgroundResource(R.drawable.button_calbrations);
+                calMinButton.setBackgroundResource(R.drawable.button_calbrations);
             }
-            //disable Datalog checkbox while running data sensing;
-            //once start data sensing, do not allow to enable/disable data logging
-            dataLogBox.setEnabled(false);
-
-            NotifyState = true;
-            //enable notification and start receiving sense reading
-            mPSoCBleRobotService.writeNotification(true);
-            barStartButton.setText("Pause");
-            //enableCalibration buttons
-            calMaxButton.setEnabled(true);
-            calMinButton.setEnabled(true);
-            calClearButton.setEnabled(true);
-
-            //check if Calmin has non-zero value, set boarder for button
-            if (CalMinState) calMinButton.setBackgroundResource(R.drawable.button_border);
-            //check if Calmin has non-1023 value, set boarder for button
-            if (CalMaxState) calMaxButton.setBackgroundResource(R.drawable.button_border);
-            //clear Cal data
-            //for (int i=0; i<6; i++){
-            //    calMax[i] = 1023;
-            //    calMin[i] =0;}
-
-        } else {
-            isUserInfoValid = false;
-            NotifyState = false;
-            //set BLE cccd to false
-            mPSoCBleRobotService.writeNotification(false);
-            barStartButton.setText("Start");
-            dataLogBox.setEnabled(true);
-            //disbale Calibration buttons
-            calMaxButton.setEnabled(false);
-            calMinButton.setEnabled(false);
-            calClearButton.setEnabled(false);
-            calMaxButton.setBackgroundResource(R.drawable.button_calbrations);
-            calMinButton.setBackgroundResource(R.drawable.button_calbrations);
+        }else{
+            Toast.makeText(getApplicationContext(), "Device is no longer available", Toast.LENGTH_LONG).show();
+            finish();
         }
     }
 

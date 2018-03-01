@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v4;
+package com.l32e.vagsmart;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.l32e.vagsmart_v1", appContext.getPackageName());
+        assertEquals("com.l32e.vagsmart_v1", appContext.getPackageName());
     }
 }

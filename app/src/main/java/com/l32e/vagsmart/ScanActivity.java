@@ -1,4 +1,4 @@
-package com.example.l32e.vagsmart_v4;
+package com.l32e.vagsmart;
 
 import android.Manifest;
 import android.app.Activity;
@@ -49,7 +49,7 @@ public class ScanActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BLE = 1;
     // Scan for 10 seconds.
-    private static final long SCAN_TIMEOUT = 10000;
+    private static final long SCAN_TIMEOUT = 30000;
 
     //This is required for Android 6.0 (Marshmallow)
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
@@ -145,7 +145,6 @@ public class ScanActivity extends AppCompatActivity {
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLE);
-
         }
 
         // Create arrays to hold BLE info found during scanning
@@ -178,10 +177,19 @@ public class ScanActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.i(TAG, "Item Selected");
-                final Intent intent = new Intent(ScanActivity.this, GraphActivity.class);
-                // Send the address of the device that was selected so that the control activity
-                // knows which device to connect with
-                if (EXTRAS_BLE_ADDRESS != null) {
+
+                final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mBluetoothDevice.get(position).getAddress());
+                Log.i(TAG,"device "+ device.getName());
+                if (device == null) {
+                    Log.e(TAG, "Device not found.  Unable to connect.");
+                    mBluetoothDevice.clear(); // Remove all existing devices
+                    mBleArrayAdapter.clear();
+                    scanLeDevice(true); // Start a scan if not already running
+                    Log.i(TAG, "Rescanning");
+                } else if (EXTRAS_BLE_ADDRESS != null) {
+                    // Send the address of the device that was selected so that the control activity
+                    // knows which device to connect with
+                    final Intent intent = new Intent(ScanActivity.this, GraphActivity.class);
                     intent.putExtra(EXTRAS_BLE_ADDRESS, mBluetoothDevice.get(position).getAddress());
                     intent.putExtra(EXTRA_BLE_DEVICE_NAME, mBleName.get(position));
                     scanLeDevice(false); // Stop scanning
@@ -237,10 +245,10 @@ public class ScanActivity extends AppCompatActivity {
             }, SCAN_TIMEOUT);
 
             mScanning = true;
-            UUID[] motorServiceArray = {PSoCBleRobotService.getMotorServiceUUID()};
+            UUID[] sensorServiceArray = {BleService.getSensorServiceUUID()};
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 //noinspection deprecation
-                mBluetoothAdapter.startLeScan(motorServiceArray, mLeScanCallback);
+                mBluetoothAdapter.startLeScan(sensorServiceArray, mLeScanCallback);
             } else { // New BLE scanning introduced in LOLLIPOP
                 ScanSettings settings;
                 List<ScanFilter> filters;
@@ -250,7 +258,7 @@ public class ScanActivity extends AppCompatActivity {
                         .build();
                 filters = new ArrayList<>();
                 // We will scan just for the Vagenie3 UUID
-                ParcelUuid PUuid = new ParcelUuid(PSoCBleRobotService.getMotorServiceUUID());
+                ParcelUuid PUuid = new ParcelUuid(BleService.getSensorServiceUUID());
                 ScanFilter filter = new ScanFilter.Builder().setServiceUuid(PUuid).build();
                 filters.add(filter);
                 mLEScanner.startScan(filters, settings, mScanCallback);
@@ -284,7 +292,6 @@ public class ScanActivity extends AppCompatActivity {
                         mBleName.add(device.getName());
                         mBleArrayAdapter.notifyDataSetChanged(); // Update the list on the screen
                     }
-
                 }
             });
         }
@@ -302,7 +309,6 @@ public class ScanActivity extends AppCompatActivity {
                 mBleName.add(result.getDevice().getName());
                 mBleArrayAdapter.notifyDataSetChanged(); // Update the list on the screen
             }
-
         }
     };
 }
