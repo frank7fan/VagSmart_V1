@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://C:\Users\frank.fan\AndroidStudioProjects\VagSmart_V5\VagSmart_V4.iml" filepath="C:\Users\frank.fan\AndroidStudioProjects\VagSmart_V5\VagSmart_V4.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/VagSmart_V5.iml" filepath="$PROJECT_DIR$/.idea/VagSmart_V5.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>

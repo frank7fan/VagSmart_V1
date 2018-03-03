@@ -46,6 +46,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
@@ -57,8 +59,6 @@ public class BleService extends Service {
 
     private final static String TAG = BleService.class.getSimpleName();
 
-    enum Sensor {ONE, TWO, THREE, FOUR, FIVE, SIX}
-
     private static BluetoothManager mBluetoothManager;
     private static BluetoothAdapter mBluetoothAdapter;
     private static String mBluetoothDeviceAddress;
@@ -69,19 +69,14 @@ public class BleService extends Service {
     private static final Queue<Object> BleQueue = new LinkedList<>();
 
     // UUID for the custom motor characteristics
-    private static final String baseUUID =           "00000000-0000-1000-8000-00805f9b34f";
-    private static final String sensorServiceUUID =   baseUUID + "0";
-    private static final String pressureLeftCharUUID =   baseUUID + "3";
-    private static final String pressureRightCharUUID =  baseUUID + "4";
+    private static final String sensorServiceUUID =  "00000000-0000-1000-8000-00805f9b34f0";
+    private static final String pressureCharUUID =   "00000000-0000-1000-8000-00805f9b34f3";
     private static final String CCCD_UUID =          "00002902-0000-1000-8000-00805f9b34fb";
 
     // Bluetooth Characteristics need to read
     private static BluetoothGattCharacteristic mPressureLeftCharacteristic;
-    private static BluetoothGattCharacteristic mPressureRightCharacteristic;
-
     // Pressure values
-    private static long sensorLeftPressure;
-    private static long sensorRightPressure;
+    private static int[] pressureDataInt = new int[GraphActivity.DATA_LENGTH];
 
     // Actions used during broadcasts to the activity
     public static final String ACTION_CONNECTED = "ACTION_GATT_CONNECTED";
@@ -152,12 +147,10 @@ public class BleService extends Service {
                 // Get the characteristics for the motor service
                 BluetoothGattService gattService = mBluetoothGatt.getService(UUID.fromString(sensorServiceUUID));
                 if (gattService == null) return; // return if the motor service is not supported
-                mPressureLeftCharacteristic = gattService.getCharacteristic(UUID.fromString(pressureLeftCharUUID));
-                mPressureRightCharacteristic = gattService.getCharacteristic(UUID.fromString(pressureRightCharUUID));
+                mPressureLeftCharacteristic = gattService.getCharacteristic(UUID.fromString(pressureCharUUID));
 
                 // Set the CCCD to notify us for the two tach readings
                 setCharacteristicNotification(mPressureLeftCharacteristic, false);
-                setCharacteristicNotification(mPressureRightCharacteristic, false);
 
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
@@ -223,16 +216,23 @@ public class BleService extends Service {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
+            short[] pressureDataShort = new short[GraphActivity.DATA_LENGTH];
             // Get the UUID of the characteristic that changed
             String uuid = characteristic.getUuid().toString();
 
             // Update the appropriate variable with the new value.
             switch (uuid) {
-                case pressureLeftCharUUID:
-                    sensorLeftPressure = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32,0);
+                case pressureCharUUID:
+                    //read pressure data from GATT
+                    //each measurement takes 2 bytes, BLE read is in 12 bytes of Little Endian
+                    //convert two byte to a SHORT and swap first byte with second byte
+                    ByteBuffer mByteBuffer = ByteBuffer.wrap(characteristic.getValue());
+                    for(int i=0; i<pressureDataInt.length; i++) {
+                        pressureDataShort[i] = mByteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(i);
+                        pressureDataInt[i] = (int)pressureDataShort[i];
+                    }
                     break;
-                case pressureRightCharUUID:
-                    sensorRightPressure = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32,0);
+                default:
                     break;
             }
             // Tell the activity that new car data is available
@@ -341,7 +341,7 @@ public class BleService extends Service {
      */
     private void writeCharacteristic(BluetoothGattCharacteristic characteristic) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
+            Log.e(TAG, "BluetoothAdapter not initialized");
             return;
         }
         BleQueue.add(characteristic);
@@ -363,18 +363,15 @@ public class BleService extends Service {
             Log.i(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        Log.e(TAG, "***before set Chararteristic");
         /* Enable or disable the callback notification on the phone */
         try {
             mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.e(TAG, "***after set Chararteristic");
-        /* Set CCCD value locally and then write to the device to register for notifications */
+        /* Set CCCD value locally and then write to the device to register for notifications*/
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                 UUID.fromString(CCCD_UUID));
-        Log.e(TAG, "***before set descriptor");
         if (enabled) {
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         } else {
@@ -399,12 +396,11 @@ public class BleService extends Service {
         // Update the motor state variable
         Log.e(TAG, "***writeNotification");
         setCharacteristicNotification(mPressureLeftCharacteristic, state);
-        setCharacteristicNotification(mPressureRightCharacteristic, state);
+        //setCharacteristicNotification(mPressureRightCharacteristic, state);
     }
     /**
      * getBound State
      *
-     * @param
      */
     public boolean isDeviceCennedted() {
         // Update the motor state variable
@@ -419,22 +415,17 @@ public class BleService extends Service {
     /**
      * Get the pressure reading
      *
-     * @param sensor to operate on
-     * @return tach value
+     * @return sensor reading in int array
      */
-    public static long getPressure(Sensor sensor) {
-        if (sensor == Sensor.ONE) {
-            return sensorLeftPressure &0x3ff;
-        } else if ( sensor == Sensor.TWO) {
-            return sensorRightPressure &0x3ff;
-        } else if ( sensor == Sensor.THREE){
-            return (sensorLeftPressure >>11)&0x3ff;
-        } else if ( sensor == Sensor.FOUR) {
-            return (sensorRightPressure >>11)&0x3ff;
-        } else if ( sensor == Sensor.FIVE){
-            return (sensorLeftPressure >>22)&0x3ff;
-        } else  // sensor == Sensor.SIX
-            return (sensorRightPressure >>22)&0x3ff;
+    public static int[] getPressure() {
+        int[] flipPressureData = new int[GraphActivity.DATA_LENGTH];
+        for (int i=0; i<pressureDataInt.length; i++){
+            //each measure is in 12 bit resolution; but the range is 2*Vref
+            // so, effective 11 bit resolution
+            // flip around for low-side measurement
+            flipPressureData[i] =  GraphActivity.RANGE_11B-pressureDataInt[i];
+        }
+        return flipPressureData;
     }
 
     /**

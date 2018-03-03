@@ -34,13 +34,17 @@ import java.util.HashMap;
  */
 
 public class GraphActivity extends AppCompatActivity implements InputDialog.InputDialogListenser{
+    //constant
+    public static final int DATA_LENGTH = 6;
+    public static final int RANGE_11B = (int)Math.pow(2,11)-1;
+    public static final int OFFSET = 20;
     //UI Objects declare
     // Objects to access the sense values; left 3 and right 3
     private TextView mSenseAverageText;
     private Button barStartButton;
     private CheckBox dataLogBox;
-    private ProgressBar[] progressBarCustom = new ProgressBar[6];
-    private ProgressBar[] progressBarRaw = new ProgressBar[6];
+    private ProgressBar[] progressBarCustom = new ProgressBar[DATA_LENGTH];
+    private ProgressBar[] progressBarRaw = new ProgressBar[DATA_LENGTH];
     private Button calMinButton, calMaxButton, calClearButton;
 
     // Keep track of whether reading Notifications are on or off
@@ -67,9 +71,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
 
     //graphic display parameters
     private int[] calMin = new int[] {0,0,0,0,0,0};
-    private int[] calMax = new int[] {1023,1023,1023,1023,1023,1023};
-    private int[] sensorReading = new int[6];
-    private int[] mappedData = new int[6];
+    private int[] calMax = new int[] {RANGE_11B,RANGE_11B,RANGE_11B,RANGE_11B,RANGE_11B,RANGE_11B};
+    private int[] mappedData = new int[DATA_LENGTH];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,25 +220,17 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                     finish();
                     break;
                 case BleService.ACTION_DATA_AVAILABLE:
-                    sensorReading[0] = (int)(1023- BleService.getPressure(BleService.Sensor.ONE));
-                    sensorReading[1] = (int)(1023- BleService.getPressure(BleService.Sensor.THREE));
-                    sensorReading[2] = (int)(1023- BleService.getPressure(BleService.Sensor.FIVE));
-                    sensorReading[3] = (int)(1023- BleService.getPressure(BleService.Sensor.TWO));
-                    sensorReading[4] = (int)(1023- BleService.getPressure(BleService.Sensor.FOUR));
-                    sensorReading[5] = (int)(1023- BleService.getPressure(BleService.Sensor.SIX));
 
                     //Display mapping data to Bar graph
-                    for (int i = 0; i < sensorReading.length; i++){
-                        progressBarRaw[i].setProgress(sensorReading[i]*100/1023);
-                        mappedData[i] = map(sensorReading[i],calMin[i], calMax[i]);
+                    for (int i = 0; i < DATA_LENGTH; i++){
+                    progressBarRaw[i].setProgress(BleService.getPressure()[i]*100/RANGE_11B);
+                        mappedData[i] = map(BleService.getPressure()[i],calMin[i], calMax[i]);
                         progressBarCustom[i].setProgress(mappedData[i]);
-                        //progressBarCustom[i].setProgress(sensorReading[i]/10);
-
                     }
                     //for debugging------------------------------------------
-                    int j=1;
-                    Log.d("Sensor","mapReading "+map(sensorReading[j],calMin[j], calMax[j])
-                            +" ,sensorReading " + sensorReading[j] + "  calMin "+ calMin[j] + "   calMax " + calMax[j]);
+                    //int j=2;
+                    //Log.d("Sensor","mapReading "+map(BleService.getPressure()[j],calMin[j], calMax[j])
+                    //        +" ,sensorReading " + BleService.getPressure()[j] + "  calMin "+ calMin[j] + "   calMax " + calMax[j]);
                     //-------------------------------------------------------
                     //check if there is internet connection
                     ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -247,8 +242,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
 
                         if(isGaming) {
                             mDatabase = FirebaseDatabase.getInstance().getReference(mDeviceName);
-                            for (int i=0; i<sensorReading.length; i++){
-                                mDatabase.child(mDeviceName).child("sensor"+i).setValue(sensorReading[i]);
+                            for (int i=0; i<6; i++){
+                                mDatabase.child(mDeviceName).child("sensor"+i).setValue(BleService.getPressure()[i]);
                             }
                             //mDatabase.child(mDeviceName).child("sensor0").setValue(sensorReading[0]);
                             mDatabase.child(mDeviceName).child("time").setValue(ServerValue.TIMESTAMP);
@@ -261,8 +256,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                             message.put("user", user);
                             message.put("Time", ServerValue.TIMESTAMP);
                             message.put("session", sessionType);
-                            for (int i=0; i<sensorReading.length; i++){
-                                message.put("s"+i, sensorReading[i]);
+                            for (int i=0; i<DATA_LENGTH; i++){
+                                message.put("s"+i, BleService.getPressure()[i]);
                             }
                             //message.put("S0", sensorReading[0]);
                             mDatabase.push().setValue(message);
@@ -332,10 +327,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                 if (CalMinState) calMinButton.setBackgroundResource(R.drawable.button_border);
                 //check if Calmin has non-1023 value, set boarder for button
                 if (CalMaxState) calMaxButton.setBackgroundResource(R.drawable.button_border);
-                //clear Cal data
-                //for (int i=0; i<6; i++){
-                //    calMax[i] = 1023;
-                //    calMin[i] =0;}
+
 
             } else {
                 isUserInfoValid = false;
@@ -361,11 +353,11 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         //take current reading and set them to calMin
 
         //check if higher than MAX
-        for (int i=0; i<sensorReading.length; i++){
-            if (sensorReading[i] > calMax[i] - 10){
-                calMin[i] = calMax[i] - 10;
+        for (int i=0; i<calMin.length; i++){
+            if (BleService.getPressure()[i] > calMax[i] - 20){
+                calMin[i] = calMax[i] - 20;
             }else{
-                calMin[i] = sensorReading[i];
+                calMin[i] = BleService.getPressure()[i];
             }
         }
         Toast.makeText(getApplicationContext(), "set Min", Toast.LENGTH_SHORT).show();
@@ -374,8 +366,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     }
     public void calClear(View view){
         //set calMin to 0; cal<ax to 1023
-        for (int i=0; i<6; i++){
-            calMax[i] = 1023;
+        for (int i=0; i<DATA_LENGTH; i++){
+            calMax[i] = RANGE_11B;
             calMin[i] =0;}
         Toast.makeText(getApplicationContext(), "clear min Max", Toast.LENGTH_SHORT).show();
         calMaxButton.setBackgroundResource(R.drawable.button_calbrations);
@@ -388,11 +380,11 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         //take current reading and set them to calMax
 
         //check if smaller than MIN
-        for (int i=0; i<sensorReading.length; i++){
-            if (sensorReading[i] < calMin[i] + 10){
-                calMax[i] = calMin[i] + 10;
+        for (int i=0; i<calMax.length; i++){
+            if (BleService.getPressure()[i] < calMin[i] + OFFSET){
+                calMax[i] = calMin[i] + OFFSET;
             }else{
-                calMax[i] = sensorReading[i];
+                calMax[i] = BleService.getPressure()[i];
             }
         }
         Toast.makeText(getApplicationContext(), "set Max", Toast.LENGTH_SHORT).show();
@@ -400,20 +392,17 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         CalMaxState = true;
     }
 
-    //map function take ADC reading from [0:1023] and map to [0:100] base on CalMin and CalMax
+    //map function take ADC reading from [0:2047] and map to [0:100] base on CalMin and CalMax
     public static int map(int inputValue, int inputMin, int inputMax){
         int extendMin, extendMax;
         //if inputMin means 10%; inputMax means 90%
-        if (inputMin!=0 | inputMax!=1023){
+        if (inputMin!=0 | inputMax!=RANGE_11B){
             extendMin = inputMin - ((inputMax - inputMin) / 8);
             extendMax = inputMax + ((inputMax - inputMin) / 8);
         }else{
             extendMin = inputMin;
             extendMax = inputMax;
         }
-        //if inputMin means 0%; inputMax means 100%
-        //int extendMin = inputMin;
-        //int extendMax = inputMax;
         //mapping from (extendMin,extendMax) to (0, 100)
         if (inputValue < extendMin){
             return 0;}
