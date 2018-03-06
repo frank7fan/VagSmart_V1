@@ -49,10 +49,12 @@ public class InputDialog extends AppCompatDialogFragment {
                     //int selectedId = radioGroupActivitySelect.getCheckedRadioButtonId();
                     if (radioGroupActivitySelect.getCheckedRadioButtonId()==R.id.onlineGame){
                         selectedId = 0;
-                    }else {
-                        selectedId =1;
                     }
-                    listenser.applyTexts(username,session,selectedId);
+                    else if (radioGroupActivitySelect.getCheckedRadioButtonId()==R.id.engineeringLog){
+                        selectedId = 1;
+                    }else
+                        selectedId = 2;
+                    listenser.dialogReturnInfo(username,session,selectedId);
                     }
                 });
 
@@ -71,6 +73,6 @@ public class InputDialog extends AppCompatDialogFragment {
     }
 
     public interface InputDialogListenser{
-        void applyTexts(String username, String session, int selectedId);
+        void dialogReturnInfo(String username, String session, int selectedId);
     }
 }

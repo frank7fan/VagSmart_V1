@@ -8,24 +8,42 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
+import android.media.MediaRecorder;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseIntArray;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
+import android.support.design.widget.Snackbar;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -65,6 +83,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private Boolean isGaming = true;
     private Boolean isUserInfoValid = false;
     private Boolean isBleConnected = false;
+    private Boolean isScreenRecording = false;
 
     //Firebase Database Object
     private DatabaseReference mDatabase;
@@ -73,6 +92,29 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private int[] calMin = new int[] {0,0,0,0,0,0};
     private int[] calMax = new int[] {RANGE_11B,RANGE_11B,RANGE_11B,RANGE_11B,RANGE_11B,RANGE_11B};
     private int[] mappedData = new int[DATA_LENGTH];
+
+    //************************************************************
+    //for screen capture
+    //************************************************************
+    private static final int REQUEST_CODE = 1000;
+    private int mScreenDensity;
+    private MediaProjectionManager mProjectionManager;
+    private static final int DISPLAY_WIDTH = 720;
+    private static final int DISPLAY_HEIGHT = 1280;
+    private MediaProjection mMediaProjection;
+    private VirtualDisplay mVirtualDisplay;
+    private MediaProjectionCallback mMediaProjectionCallback;
+    private ToggleButton mToggleButton;
+    private MediaRecorder mMediaRecorder;
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    private static final int REQUEST_PERMISSIONS = 10;
+
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +155,16 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         Log.i(TAG, "Binding Service");
         Intent SensorServiceIntent = new Intent(this, BleService.class);
         bindService(SensorServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
+        //************************************************************
+        //for screen capture
+        //************************************************************
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        mScreenDensity = metrics.densityDpi;
+        mMediaRecorder = new MediaRecorder();
+        mProjectionManager = (MediaProjectionManager) getSystemService
+                (Context.MEDIA_PROJECTION_SERVICE);
     }
     /**
      * This manages the lifecycle of the BLE service.
@@ -187,6 +239,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         super.onDestroy();
         unbindService(mServiceConnection);
         mBleService = null;
+        destroyMediaProjection();
     }
 
     /**
@@ -288,18 +341,49 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     }
 
     @Override
-    public void applyTexts(String username, String session, int selectedId) {
+    public void dialogReturnInfo(String username, String session, int selectedId) {
         user = username;
         sessionType = session;
         Toast.makeText(getApplicationContext(), "selectedId="+selectedId, Toast.LENGTH_LONG).show();
         isGaming = selectedId == 0;
-        if (TextUtils.isEmpty(username)|TextUtils.isEmpty(session)) {
+        //handle if Record Screen option is selected
+        if (selectedId == 2){
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) +
+                    ContextCompat.checkSelfPermission(GraphActivity.this, android.Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED){
+                if (ActivityCompat.shouldShowRequestPermissionRationale
+                        (GraphActivity.this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
+                        ActivityCompat.shouldShowRequestPermissionRationale
+                                (GraphActivity.this, android.Manifest.permission.RECORD_AUDIO)) {
+                    Snackbar.make(findViewById(android.R.id.content), "Please enable Microphone and Storage permissions." ,
+                            Snackbar.LENGTH_INDEFINITE).setAction("ENABLE",
+                            new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    ActivityCompat.requestPermissions(GraphActivity.this,
+                                            new String[]{android.Manifest.permission
+                                                    .WRITE_EXTERNAL_STORAGE, android.Manifest.permission.RECORD_AUDIO},
+                                            REQUEST_PERMISSIONS);
+                                }
+                            }).show();
+                } else {
+                    ActivityCompat.requestPermissions(GraphActivity.this,
+                            new String[]{android.Manifest.permission
+                                    .WRITE_EXTERNAL_STORAGE, android.Manifest.permission.RECORD_AUDIO},
+                            REQUEST_PERMISSIONS);
+                }
+            } else {
+                //start screen recording
+                isScreenRecording = true;
+                initRecorder();
+                shareScreen();
+            }
+        } else if (TextUtils.isEmpty(username)|TextUtils.isEmpty(session)) {
             Toast.makeText(getApplicationContext(), "Input User Info Blank, no data sent", Toast.LENGTH_LONG).show();
             isUserInfoValid = false;
-        }else{
-            isUserInfoValid = true;
-        }
-
+            }else{
+                isUserInfoValid = true;
+            }
     }
     /* This will be the place for the code when button get pushed */
     public void goStart(View view) {
@@ -342,6 +426,14 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                 calClearButton.setEnabled(false);
                 calMaxButton.setBackgroundResource(R.drawable.button_calbrations);
                 calMinButton.setBackgroundResource(R.drawable.button_calbrations);
+                //stop screen recording
+                if (isScreenRecording){
+                    mMediaRecorder.stop();
+                    mMediaRecorder.reset();
+                    Log.v(TAG, "Stopping Recording");
+                    stopScreenSharing();
+                    isScreenRecording = false;
+                }
             }
         }else{
             Toast.makeText(getApplicationContext(), "Device is no longer available", Toast.LENGTH_LONG).show();
@@ -415,6 +507,135 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private int displayNumber(String method, int[] inputArray){
         Arrays.sort(inputArray);
         return (inputArray[inputArray.length-1]+inputArray[inputArray.length-2])/2;
+    }
+
+    //*****************************************************************
+    //for screen capture
+    //*****************************************************************
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != REQUEST_CODE) {
+            Log.e(TAG, "Unknown request code: " + requestCode);
+            return;
+        }
+        if (resultCode != RESULT_OK) {
+            Toast.makeText(this,
+                    "Screen Cast Permission Denied", Toast.LENGTH_SHORT).show();
+            mToggleButton.setChecked(false);
+            return;
+        }
+        mMediaProjectionCallback = new MediaProjectionCallback();
+        mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
+        mMediaProjection.registerCallback(mMediaProjectionCallback, null);
+        mVirtualDisplay = createVirtualDisplay();
+        mMediaRecorder.start();
+    }
+
+    private void shareScreen() {
+        if (mMediaProjection == null) {
+            startActivityForResult(mProjectionManager.createScreenCaptureIntent(), REQUEST_CODE);
+            return;
+        }
+        mVirtualDisplay = createVirtualDisplay();
+        mMediaRecorder.start();
+    }
+
+    private VirtualDisplay createVirtualDisplay() {
+        return mMediaProjection.createVirtualDisplay("MainActivity",
+                DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                mMediaRecorder.getSurface(), null /*Callbacks*/, null
+                /*Handler*/);
+    }
+
+    private void initRecorder() {
+        try {
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mMediaRecorder.setOutputFile(Environment
+                    .getExternalStoragePublicDirectory(Environment
+                            .DIRECTORY_DOWNLOADS) + "/video.mp4");
+            mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+            mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
+            mMediaRecorder.setVideoFrameRate(30);
+            int rotation = getWindowManager().getDefaultDisplay().getRotation();
+            int orientation = ORIENTATIONS.get(rotation + 90);
+            mMediaRecorder.setOrientationHint(orientation);
+            mMediaRecorder.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class MediaProjectionCallback extends MediaProjection.Callback {
+        @Override
+        public void onStop() {
+            if (mToggleButton.isChecked()) {
+                mToggleButton.setChecked(false);
+                mMediaRecorder.stop();
+                mMediaRecorder.reset();
+                Log.v(TAG, "Recording Stopped");
+            }
+            mMediaProjection = null;
+            stopScreenSharing();
+        }
+    }
+
+    private void stopScreenSharing() {
+        if (mVirtualDisplay == null) {
+            return;
+        }
+        mVirtualDisplay.release();
+        //mMediaRecorder.release(); //If used: mMediaRecorder object cannot
+        // be reused again
+        destroyMediaProjection();
+    }
+
+    private void destroyMediaProjection() {
+        if (mMediaProjection != null) {
+            mMediaProjection.unregisterCallback(mMediaProjectionCallback);
+            mMediaProjection.stop();
+            mMediaProjection = null;
+        }
+        Log.i(TAG, "MediaProjection Stopped");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_PERMISSIONS: {
+                if ((grantResults.length > 0) && (grantResults[0] +
+                        grantResults[1]) == PackageManager.PERMISSION_GRANTED) {
+                    //start screen recording
+                    isScreenRecording = true;
+                    initRecorder();
+                    shareScreen();
+                } else {
+                    //mToggleButton.setChecked(false);
+                    Snackbar.make(findViewById(android.R.id.content), R.string.label_permissions,
+                            Snackbar.LENGTH_INDEFINITE).setAction("ENABLE",
+                            new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    Intent intent = new Intent();
+                                    intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    intent.addCategory(Intent.CATEGORY_DEFAULT);
+                                    intent.setData(Uri.parse("package:" + getPackageName()));
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                                    startActivity(intent);
+                                }
+                            }).show();
+                }
+                return;
+            }
+        }
     }
 }
 
