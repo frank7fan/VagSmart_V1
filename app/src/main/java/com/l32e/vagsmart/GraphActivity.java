@@ -64,7 +64,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private ProgressBar[] progressBarCustom = new ProgressBar[DATA_LENGTH];
     private ProgressBar[] progressBarRaw = new ProgressBar[DATA_LENGTH];
     private Button calMinButton, calMaxButton, calClearButton;
-
+    private TextView textViewScreenRecording;
     // Keep track of whether reading Notifications are on or off
     private boolean NotifyState = false;
     //Track Cal status
@@ -146,6 +146,8 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         calMaxButton.setEnabled(false);
         calMinButton.setEnabled(false);
         calClearButton.setEnabled(false);
+        textViewScreenRecording = (TextView) findViewById(R.id.screenRecording);
+        textViewScreenRecording.setVisibility(View.INVISIBLE);
 
         final Intent intent = getIntent();
         mDeviceAddress = intent.getStringExtra(ScanActivity.EXTRAS_BLE_ADDRESS);
@@ -375,6 +377,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
             } else {
                 //start screen recording
                 isScreenRecording = true;
+                textViewScreenRecording.setVisibility(View.VISIBLE);
                 initRecorder();
                 shareScreen();
             }
@@ -433,6 +436,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                     Log.v(TAG, "Stopping Recording");
                     stopScreenSharing();
                     isScreenRecording = false;
+                    textViewScreenRecording.setVisibility(View.INVISIBLE);
                 }
             }
         }else{
@@ -613,6 +617,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                         grantResults[1]) == PackageManager.PERMISSION_GRANTED) {
                     //start screen recording
                     isScreenRecording = true;
+                    textViewScreenRecording.setVisibility(View.VISIBLE);
                     initRecorder();
                     shareScreen();
                 } else {
