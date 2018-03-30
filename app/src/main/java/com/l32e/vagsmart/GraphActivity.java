@@ -47,6 +47,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import com.l32e.vagsmart.Utils;
+
 /**
  * Created by frank.fan on 3/1/2018.
  */
@@ -63,7 +65,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private CheckBox dataLogBox;
     private ProgressBar[] progressBarCustom = new ProgressBar[DATA_LENGTH];
     private ProgressBar[] progressBarRaw = new ProgressBar[DATA_LENGTH];
-    private Button calMinButton, calMaxButton, calClearButton;
+    public static Button calMinButton, calMaxButton, calClearButton;
     private TextView textViewScreenRecording;
     // Keep track of whether reading Notifications are on or off
     private boolean NotifyState = false;
@@ -104,7 +106,6 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private MediaProjection mMediaProjection;
     private VirtualDisplay mVirtualDisplay;
     private MediaProjectionCallback mMediaProjectionCallback;
-    private ToggleButton mToggleButton;
     private MediaRecorder mMediaRecorder;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final int REQUEST_PERMISSIONS = 10;
@@ -123,30 +124,28 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         //lock screen orientation to avoid lose BLE connection after connected
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        progressBarCustom[0] = (ProgressBar) findViewById(R.id.progressBar1);
-        progressBarCustom[1] = (ProgressBar) findViewById(R.id.progressBar2);
-        progressBarCustom[2] = (ProgressBar) findViewById(R.id.progressBar3);
-        progressBarCustom[3] = (ProgressBar) findViewById(R.id.progressBar4);
-        progressBarCustom[4] = (ProgressBar) findViewById(R.id.progressBar5);
-        progressBarCustom[5] = (ProgressBar) findViewById(R.id.progressBar6);
-        progressBarRaw[0] = (ProgressBar) findViewById(R.id.progressBar1a);
-        progressBarRaw[1] = (ProgressBar) findViewById(R.id.progressBar2a);
-        progressBarRaw[2] = (ProgressBar) findViewById(R.id.progressBar3a);
-        progressBarRaw[3] = (ProgressBar) findViewById(R.id.progressBar4a);
-        progressBarRaw[4] = (ProgressBar) findViewById(R.id.progressBar5a);
-        progressBarRaw[5] = (ProgressBar) findViewById(R.id.progressBar6a);
+        progressBarCustom[0] =  findViewById(R.id.progressBar0);
+        progressBarCustom[1] =  findViewById(R.id.progressBar1);
+        progressBarCustom[2] =  findViewById(R.id.progressBar2);
+        progressBarCustom[3] =  findViewById(R.id.progressBar3);
+        progressBarCustom[4] =  findViewById(R.id.progressBar4);
+        progressBarCustom[5] =  findViewById(R.id.progressBar5);
+        progressBarRaw[0] =  findViewById(R.id.progressBarA0);
+        progressBarRaw[1] =  findViewById(R.id.progressBarA1);
+        progressBarRaw[2] =  findViewById(R.id.progressBarA2);
+        progressBarRaw[3] =  findViewById(R.id.progressBarA3);
+        progressBarRaw[4] =  findViewById(R.id.progressBarA4);
+        progressBarRaw[5] =  findViewById(R.id.progressBarA5);
 
         // Assign the various layout objects to the appropriate variables
-        mSenseAverageText = (TextView) findViewById(R.id.senseAverage);
-        barStartButton = (Button) findViewById(R.id.bar_start_button);
-        dataLogBox = (CheckBox) findViewById(R.id.radioButton);
-        calMaxButton = (Button) findViewById(R.id.btn_cal_max);
-        calMinButton = (Button) findViewById(R.id.btn_cal_min);
-        calClearButton = (Button) findViewById(R.id.btn_cal_clr);
-        calMaxButton.setEnabled(false);
-        calMinButton.setEnabled(false);
-        calClearButton.setEnabled(false);
-        textViewScreenRecording = (TextView) findViewById(R.id.screenRecording);
+        mSenseAverageText = findViewById(R.id.senseAverage);
+        barStartButton = findViewById(R.id.bar_start_button);
+        dataLogBox = findViewById(R.id.radioButton);
+        calMaxButton = findViewById(R.id.btn_cal_max);
+        calMinButton = findViewById(R.id.btn_cal_min);
+        calClearButton = findViewById(R.id.btn_cal_clr);
+        Utils.enableCalButtons(false);
+        textViewScreenRecording = findViewById(R.id.screenRecording);
         textViewScreenRecording.setVisibility(View.INVISIBLE);
 
         final Intent intent = getIntent();
@@ -279,7 +278,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                     //Display mapping data to Bar graph
                     for (int i = 0; i < DATA_LENGTH; i++){
                     progressBarRaw[i].setProgress(BleService.getPressure()[i]*100/RANGE_11B);
-                        mappedData[i] = map(BleService.getPressure()[i],calMin[i], calMax[i]);
+                        mappedData[i] = Utils.map(BleService.getPressure()[i],calMin[i], calMax[i]);
                         progressBarCustom[i].setProgress(mappedData[i]);
                     }
                     //for debugging------------------------------------------
@@ -321,7 +320,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                     //Display number on top of screen
                     //keep this is the end since sort will rearrange the Array sequency
                     //mSenseAverageText.setText(String.format("%d", displayNumber("Max2", sensorReading)/10));
-                    mSenseAverageText.setText("Average 2 Max: " + displayNumber("Max2", mappedData));
+                    mSenseAverageText.setText("Average 2 Max: " + Utils.displayNumber("Max2", mappedData));
                     //progressBarCustom1.setProgress((Integer.parseInt(mSenseAverageText.getText().toString()))/10);
                     break;
             }
@@ -388,9 +387,14 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                 isUserInfoValid = true;
             }
     }
-    /* This will be the place for the code when button get pushed */
+    /**
+     * Handle when Start button get pushed
+     *
+     */
     public void goStart(View view) {
         if(isBleConnected){
+            //START BUTTON get pushed
+            //start receiving and displaying data
             if(!NotifyState) {
                 //id data logging enabled, pop up window for input information
                 if(dataLogBox.isChecked()){
@@ -406,16 +410,15 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
 
                 barStartButton.setText("Pause");
                 //enableCalibration buttons
-                calMaxButton.setEnabled(true);
-                calMinButton.setEnabled(true);
-                calClearButton.setEnabled(true);
+                Utils.enableCalButtons(true);
 
                 //check if Calmin has non-zero value, set boarder for button
                 if (CalMinState) calMinButton.setBackgroundResource(R.drawable.button_border);
                 //check if Calmin has non-1023 value, set boarder for button
                 if (CalMaxState) calMaxButton.setBackgroundResource(R.drawable.button_border);
 
-
+            //PAUSE BUTTON gets pushed
+            //stop receiving and display data
             } else {
                 isUserInfoValid = false;
                 NotifyState = false;
@@ -424,11 +427,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                 barStartButton.setText("Start");
                 dataLogBox.setEnabled(true);
                 //disbale Calibration buttons
-                calMaxButton.setEnabled(false);
-                calMinButton.setEnabled(false);
-                calClearButton.setEnabled(false);
-                calMaxButton.setBackgroundResource(R.drawable.button_calbrations);
-                calMinButton.setBackgroundResource(R.drawable.button_calbrations);
+                Utils.enableCalButtons(false);
                 //stop screen recording
                 if (isScreenRecording){
                     mMediaRecorder.stop();
@@ -444,7 +443,10 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
             finish();
         }
     }
-
+    /**
+     * Handle when Cal Min button get pushed
+     *
+     */
     public void calSetMin(View view){
         //take current reading and set them to calMin
 
@@ -460,6 +462,11 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         calMinButton.setBackgroundResource(R.drawable.button_border);
         CalMinState = true;
     }
+
+    /**
+     * Handle when Cal Clear button get pushed
+     *
+     */
     public void calClear(View view){
         //set calMin to 0; cal<ax to 1023
         for (int i=0; i<DATA_LENGTH; i++){
@@ -471,7 +478,10 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         CalMaxState = false;
         CalMinState = false;
     }
-
+    /**
+     * Handle when Cal Set Max button get pushed
+     *
+     */
     public void calSetMax(View view){
         //take current reading and set them to calMax
 
@@ -488,31 +498,6 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         CalMaxState = true;
     }
 
-    //map function take ADC reading from [0:2047] and map to [0:100] base on CalMin and CalMax
-    public static int map(int inputValue, int inputMin, int inputMax){
-        int extendMin, extendMax;
-        //if inputMin means 10%; inputMax means 90%
-        if (inputMin!=0 | inputMax!=RANGE_11B){
-            extendMin = inputMin - ((inputMax - inputMin) / 8);
-            extendMax = inputMax + ((inputMax - inputMin) / 8);
-        }else{
-            extendMin = inputMin;
-            extendMax = inputMax;
-        }
-        //mapping from (extendMin,extendMax) to (0, 100)
-        if (inputValue < extendMin){
-            return 0;}
-        else if (inputValue > extendMax){
-            return 100;}
-        else return (inputValue-extendMin)*100/(extendMax-extendMin);
-        //else return inputValue/10;
-    }
-
-    private int displayNumber(String method, int[] inputArray){
-        Arrays.sort(inputArray);
-        return (inputArray[inputArray.length-1]+inputArray[inputArray.length-2])/2;
-    }
-
     //*****************************************************************
     //for screen capture
     //*****************************************************************
@@ -525,7 +510,6 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
         if (resultCode != RESULT_OK) {
             Toast.makeText(this,
                     "Screen Cast Permission Denied", Toast.LENGTH_SHORT).show();
-            mToggleButton.setChecked(false);
             return;
         }
         mMediaProjectionCallback = new MediaProjectionCallback();
@@ -577,12 +561,9 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private class MediaProjectionCallback extends MediaProjection.Callback {
         @Override
         public void onStop() {
-            if (mToggleButton.isChecked()) {
-                mToggleButton.setChecked(false);
-                mMediaRecorder.stop();
-                mMediaRecorder.reset();
-                Log.v(TAG, "Recording Stopped");
-            }
+            mMediaRecorder.stop();
+            mMediaRecorder.reset();
+            Log.v(TAG, "Recording Stopped");
             mMediaProjection = null;
             stopScreenSharing();
         }

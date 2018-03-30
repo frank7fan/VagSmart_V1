@@ -146,9 +146,9 @@ public class BleService extends Service {
 
                 // Get the characteristics for the motor service
                 BluetoothGattService gattService = mBluetoothGatt.getService(UUID.fromString(sensorServiceUUID));
-                if (gattService == null) return; // return if the motor service is not supported
+                if (gattService == null) return; // return if the  service is not supported
                 mPressureLeftCharacteristic = gattService.getCharacteristic(UUID.fromString(pressureCharUUID));
-
+                if (mPressureLeftCharacteristic == null) return;
                 // Set the CCCD to notify us for the two tach readings
                 setCharacteristicNotification(mPressureLeftCharacteristic, false);
 
