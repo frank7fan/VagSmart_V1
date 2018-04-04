@@ -10,12 +10,56 @@
       "client_info": {
         "mobilesdk_app_id": "1:92380679586:android:a795aba2d03325ba",
         "android_client_info": {
-          "package_name": "com.l32e.vagsmart"
+          "package_name": "com.example.l32e.vagsmart_v4"
         }
       },
       "oauth_client": [
         {
           "client_id": "92380679586-as3325fae0c57u16apgenal7di9k8o20.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.l32e.vagsmart_v4",
+            "certificate_hash": "877cac4350faf9b30f8dd5185a0eb6b7e011e262"
+          }
+        },
+        {
+          "client_id": "92380679586-ig038f8jg3i19au0sam3jt76egpsrv96.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUqSDr5ZA2Yo7bGct_mG8Si6tRtoPPX2M"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "92380679586-ig038f8jg3i19au0sam3jt76egpsrv96.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:92380679586:android:45e1d7c6c344d4e4",
+        "android_client_info": {
+          "package_name": "com.l32e.vagsmart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "92380679586-encijs3ic88o94sh8hrl8g075inpacub.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.l32e.vagsmart",

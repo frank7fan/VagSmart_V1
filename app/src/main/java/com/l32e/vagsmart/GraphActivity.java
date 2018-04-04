@@ -25,7 +25,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -36,18 +35,18 @@ import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 import android.support.design.widget.Snackbar;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
-
-import com.l32e.vagsmart.Utils;
 
 /**
  * Created by frank.fan on 3/1/2018.
@@ -58,6 +57,7 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     public static final int DATA_LENGTH = 6;
     public static final int RANGE_11B = (int)Math.pow(2,11)-1;
     public static final int OFFSET = 20;
+    public static final int OPTION_GAMING = 0, OPTION_ENGINEERING = 1, OPTION_SCREEN_RECORDING = 2;
     //UI Objects declare
     // Objects to access the sense values; left 3 and right 3
     private TextView mSenseAverageText;
@@ -80,12 +80,16 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     private static String mDeviceAddress;
     private static String mDeviceName;
     private static BleService mBleService;
+    //setting parameters
     private String user;
     private String sessionType;
-    private Boolean isGaming = true;
-    private Boolean isUserInfoValid = false;
+    private int dataLogOption;
+    //private Boolean isGaming = true;
     private Boolean isBleConnected = false;
     private Boolean isScreenRecording = false;
+    private File fileCsvPathName;
+    private CSVWriter writer;
+    private int recordStartTime;
 
     //Firebase Database Object
     private DatabaseReference mDatabase;
@@ -281,42 +285,62 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                         mappedData[i] = Utils.map(BleService.getPressure()[i],calMin[i], calMax[i]);
                         progressBarCustom[i].setProgress(mappedData[i]);
                     }
-                    //for debugging------------------------------------------
-                    //int j=2;
-                    //Log.d("Sensor","mapReading "+map(BleService.getPressure()[j],calMin[j], calMax[j])
-                    //        +" ,sensorReading " + BleService.getPressure()[j] + "  calMin "+ calMin[j] + "   calMax " + calMax[j]);
-                    //-------------------------------------------------------
+
                     //check if there is internet connection
                     ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
                     NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                     boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
                     // write sensor readings to Firebase Realtime database
-                    if (isConnected & dataLogBox.isChecked() & isUserInfoValid) {
+                    if (dataLogBox.isChecked()){
+                        if (isConnected){
+                            switch(dataLogOption) {
+                                case OPTION_GAMING:
+                                    mDatabase = FirebaseDatabase.getInstance().getReference(mDeviceName);
+                                    for (int i=0; i<6; i++){
+                                        mDatabase.child(mDeviceName).child("sensor"+(i+1)).setValue(BleService.getPressure()[i]);
+                                    }
+                                    //mDatabase.child(mDeviceName).child("sensor0").setValue(sensorReading[0]);
+                                    mDatabase.child(mDeviceName).child("time").setValue(ServerValue.TIMESTAMP);
+                                    mDatabase.child(mDeviceName).child("user").setValue(user);
+                                    mDatabase.child(mDeviceName).child("session").setValue(sessionType);
+                                    break;
 
-                        if(isGaming) {
-                            mDatabase = FirebaseDatabase.getInstance().getReference(mDeviceName);
-                            for (int i=0; i<6; i++){
-                                mDatabase.child(mDeviceName).child("sensor"+i).setValue(BleService.getPressure()[i]);
-                            }
-                            //mDatabase.child(mDeviceName).child("sensor0").setValue(sensorReading[0]);
-                            mDatabase.child(mDeviceName).child("time").setValue(ServerValue.TIMESTAMP);
-                            mDatabase.child(mDeviceName).child("user").setValue(user);
-                            mDatabase.child(mDeviceName).child("session").setValue(sessionType);
+                                case OPTION_ENGINEERING:
+                                    mDatabase = FirebaseDatabase.getInstance().getReference(mDeviceName+"RTData");
+                                    HashMap<String, Object> message = new HashMap<>();
+                                    message.put("user", user);
+                                    message.put("Time", ServerValue.TIMESTAMP);
+                                    message.put("session", sessionType);
+                                    for (int i=0; i<DATA_LENGTH; i++){
+                                        message.put("s"+i, BleService.getPressure()[i]);
+                                    }
+                                    //message.put("S0", sensorReading[0]);
+                                    mDatabase.push().setValue(message);
+                                    break;
 
-                        }else {
-                            mDatabase = FirebaseDatabase.getInstance().getReference(mDeviceName+"RTData");
-                            HashMap<String, Object> message = new HashMap<>();
-                            message.put("user", user);
-                            message.put("Time", ServerValue.TIMESTAMP);
-                            message.put("session", sessionType);
-                            for (int i=0; i<DATA_LENGTH; i++){
-                                message.put("s"+i, BleService.getPressure()[i]);
+                                case OPTION_SCREEN_RECORDING:
+                                    if (isScreenRecording){
+                                            String[] dataString = new String[DATA_LENGTH+1];
+                                            for (int i=0; i<DATA_LENGTH; i++){
+                                                dataString[i+1] = String.valueOf(BleService.getPressure()[i]);
+                                            }
+                                            dataString[0] = String.valueOf((int)System.currentTimeMillis()-recordStartTime);
+                                        try {
+                                            writer.writeNext(dataString);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                    break;
                             }
-                            //message.put("S0", sensorReading[0]);
-                            mDatabase.push().setValue(message);
+
+                        } else {
+                            //send toast message saying NO INTERNET CONNECTION
+                            Toast.makeText(GraphActivity.this, "NO internet Connect, no data sent", Toast.LENGTH_LONG).show();
                         }
                     }
+
                     //Display number on top of screen
                     //keep this is the end since sort will rearrange the Array sequency
                     //mSenseAverageText.setText(String.format("%d", displayNumber("Max2", sensorReading)/10));
@@ -345,10 +369,10 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
     public void dialogReturnInfo(String username, String session, int selectedId) {
         user = username;
         sessionType = session;
+        dataLogOption = selectedId;
         Toast.makeText(getApplicationContext(), "selectedId="+selectedId, Toast.LENGTH_LONG).show();
-        isGaming = selectedId == 0;
         //handle if Record Screen option is selected
-        if (selectedId == 2){
+        if (dataLogOption == OPTION_SCREEN_RECORDING){
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) +
                     ContextCompat.checkSelfPermission(GraphActivity.this, android.Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED){
@@ -379,13 +403,9 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                 textViewScreenRecording.setVisibility(View.VISIBLE);
                 initRecorder();
                 shareScreen();
+
             }
-        } else if (TextUtils.isEmpty(username)|TextUtils.isEmpty(session)) {
-            Toast.makeText(getApplicationContext(), "Input User Info Blank, no data sent", Toast.LENGTH_LONG).show();
-            isUserInfoValid = false;
-            }else{
-                isUserInfoValid = true;
-            }
+        }
     }
     /**
      * Handle when Start button get pushed
@@ -420,7 +440,6 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
             //PAUSE BUTTON gets pushed
             //stop receiving and display data
             } else {
-                isUserInfoValid = false;
                 NotifyState = false;
                 //set BLE cccd to false
                 mBleService.writeNotification(false);
@@ -436,6 +455,13 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
                     stopScreenSharing();
                     isScreenRecording = false;
                     textViewScreenRecording.setVisibility(View.INVISIBLE);
+                    //close csv file
+                    try {
+                        writer.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
         }else{
@@ -538,12 +564,16 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
 
     private void initRecorder() {
         try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
+            String currentDateTime = dateFormat.format(new Date());
+            File saveDirectory = new File
+                    (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
+                            ,File.separator);
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mMediaRecorder.setOutputFile(Environment
-                    .getExternalStoragePublicDirectory(Environment
-                            .DIRECTORY_DOWNLOADS) + "/video.mp4");
+            //need to add file separator again here for unknown reason, otherwise it will "Download" as filename, not folder
+            mMediaRecorder.setOutputFile(saveDirectory + File.separator + currentDateTime + ".mp4");
             mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
@@ -553,6 +583,19 @@ public class GraphActivity extends AppCompatActivity implements InputDialog.Inpu
             int orientation = ORIENTATIONS.get(rotation + 90);
             mMediaRecorder.setOrientationHint(orientation);
             mMediaRecorder.prepare();
+
+            //init save data to storage file
+            fileCsvPathName = new File(saveDirectory,currentDateTime +".csv");
+            FileWriter mfileWriter = new FileWriter(fileCsvPathName, true);
+            writer = new CSVWriter(mfileWriter);
+            dateFormat = new SimpleDateFormat("yyyy-MMdd-HH:mm:ss");
+            currentDateTime = dateFormat.format(new Date());
+            String[] title1 = {"time:", currentDateTime, "User:", user, "Session:", sessionType};
+            writer.writeNext(title1);
+            String[] title2 = {"Time","Sensor 1", "Sensor 2","Sensor 3","Sensor 4","Sensor 5","Sensor 6"};
+            writer.writeNext(title2);
+            recordStartTime = (int) System.currentTimeMillis();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

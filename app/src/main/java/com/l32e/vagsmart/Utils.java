@@ -8,8 +8,6 @@ import java.util.Arrays;
 
 public class Utils {
 
-
-
     //map function take ADC reading from [0:2047] and map to [0:100] base on CalMin and CalMax
     public static int map(int inputValue, int inputMin, int inputMax){
         int extendMin, extendMax;
